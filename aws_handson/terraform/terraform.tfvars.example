@@ -1,0 +1,5 @@
+bucket_name="simran-bansal-demo-bucket"
+
+//7anRm+4uz3NiNLGlietMKO0JzEI6maSO4di70ZzI
+
+//AKIAZN3KKI2BV5IM7PAS
