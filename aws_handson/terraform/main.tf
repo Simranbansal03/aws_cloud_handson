@@ -1,11 +1,14 @@
+
 resource "aws_s3_bucket" "bucket" {
-    bucket = var.bucket_name
-    tags = {
-      name = var.bucket_name
-      enviroment = "Dev"
-    }
-  
-}terraform {
+  bucket = var.bucket_name
+
+  tags = {
+    name        = var.bucket_name
+    environment = "Dev"
+  }
+}
+
+terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
