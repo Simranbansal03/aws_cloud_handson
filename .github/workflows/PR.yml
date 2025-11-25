@@ -32,10 +32,15 @@ jobs:
         run: terraform init
         working-directory: aws_handson/terraform
 
-      # Step 4: Terraform Plan
-      - name: Terraform Plan
+      # Step 4: Terraform Plan with Debug Logs
+      - name: Terraform Plan (Debug)
         id: plan
-        run: terraform plan -no-color | tee plan.txt
+        run: |
+          export TF_LOG=DEBUG
+          terraform plan -no-color > debug.log 2>&1
+          cat debug.log
+          # Also save normal plan output for PR comment
+          terraform plan -no-color | tee plan.txt
         working-directory: aws_handson/terraform
 
       # Step 5: Post Plan Output as PR Comment (only on PR event)
@@ -46,7 +51,8 @@ jobs:
           script: |
             const fs = require('fs');
             const planOutput = fs.readFileSync('aws_handson/terraform/plan.txt', 'utf8');
-            const output = `\`\`\`\n${planOutput}\n\`\`\``;
+            const debugOutput = fs.readFileSync('aws_handson/terraform/debug.log', 'utf8');
+            const output = `### Terraform Plan\n\`\`\`\n${planOutput}\n\`\`\`\n\n### Debug Logs\n\`\`\`\n${debugOutput.substring(0, 5000)}...\n\`\`\`\n*(Truncated for readability)*`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
