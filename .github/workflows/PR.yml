@@ -1,0 +1,45 @@
+name: Terraform Workflow
+
+on:
+  push:
+    branches:
+      - feature-branch
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+
+      - name: Post Plan to PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const output = `\`\`\`\n${process.env.PLAN}\n\`\`\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+        env:
+          PLAN: ${{ steps.plan.outputs.stdout }}
+
+      - name: Sleep for 5 minutes
+        run: sleep 300
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
