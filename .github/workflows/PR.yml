@@ -2,6 +2,9 @@
 name: Terraform Workflow
 
 on:
+  push:
+    branches:
+      - feature-branch
   pull_request:
     branches:
       - main
@@ -14,24 +17,30 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
+      # Step 3: Terraform Init
       - name: Terraform Init
         run: terraform init
         working-directory: aws_handson/terraform
 
+      # Step 4: Terraform Plan
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color | tee plan.txt
         working-directory: aws_handson/terraform
 
+      # Step 5: Post Plan Output as PR Comment (only on PR event)
       - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           script: |
@@ -45,9 +54,11 @@ jobs:
               body: output
             });
 
+      # Step 6: Sleep for 5 minutes
       - name: Sleep for 5 minutes
         run: sleep 300
 
+      # Step 7: Terraform Apply only after PR merge
       - name: Terraform Apply
         if: github.event.pull_request.merged == true
         run: terraform apply -auto-approve
