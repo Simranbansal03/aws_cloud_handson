@@ -36,7 +36,7 @@ jobs:
       # Step 4: Terraform Plan using .tfvars
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -var-file="terraform.tfvars" | tee plan.txt
+        run: terraform plan -no-color -var-file="terraform.tfvars.example" | tee plan.txt
         working-directory: aws_handson/terraform
 
       # Step 5: Post Plan Output as PR Comment (only on PR event)
