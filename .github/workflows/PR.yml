@@ -90,7 +90,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ✅ Step 2: Configure AWS Credentials
+      #  Step 2: Configure AWS Credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -117,7 +117,7 @@ jobs:
 
       # Step 6: Post Plan Output as PR Comment (only on PR event)
       - name: Post Plan to PR
-        #if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           script: |
