@@ -33,33 +33,3 @@ jobs:
         run: terraform init
         working-directory: aws_handson/terraform
 
-      # Step 4: Terraform Plan
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color | tee plan.txt
-        working-directory: aws_handson/terraform
-
-      # Step 5: Post Plan Output as PR Comment (only on PR event)
-      - name: Post Plan to PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const planOutput = fs.readFileSync('aws_handson/terraform/plan.txt', 'utf8');
-            const output = `### Terraform Plan\n\`\`\`\n${planOutput}\n\`\`\``;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
-
-      # Step 6: Sleep for 5 minutes
-      - name: Sleep for 5 minutes
-        run: sleep 300
-
-      # Step 7: Terraform Apply only after merge (push to main)
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve
