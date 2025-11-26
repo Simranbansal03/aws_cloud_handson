@@ -1,0 +1,137 @@
+
+# name: Terraform Workflow
+
+# on:
+#   push:
+#     branches:
+#       - feature-branch
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+
+# permissions:
+#   contents: read
+#   pull-requests: write
+
+# jobs:
+#   terraform:
+#     runs-on: ubuntu-latest
+#     steps:
+#       # Step 1: Checkout repository
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       # Step 2: Setup Terraform
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v2
+#         with:
+#           terraform_version: 1.5.7
+
+#       # Step 3: Terraform Init
+#       - name: Terraform Init
+#         run: terraform init
+#         working-directory: aws_handson/terraform
+
+#       # Step 4: Terraform Plan using .tfvars
+#       - name: Terraform Plan
+#         id: plan
+#         run: terraform plan -no-color -var-file="terraform.tfvars.example" | tee plan.txt
+#         working-directory: aws_handson/terraform
+
+#       # Step 5: Post Plan Output as PR Comment (only on PR event)
+#       - name: Post Plan to PR
+#         if: github.event_name == 'pull_request'
+#         uses: actions/github-script@v6
+#         with:
+#           script: |
+#             const fs = require('fs');
+#             const planOutput = fs.readFileSync('aws_handson/terraform/plan.txt', 'utf8');
+#             const output = `### Terraform Plan\n\`\`\`\n${planOutput}\n\`\`\``;
+#             github.rest.issues.createComment({
+#               issue_number: context.issue.number,
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               body: output
+#             });
+
+#       # Step 6: Sleep for 5 minutes
+#       - name: Sleep for 5 minutes
+#         run: sleep 300
+
+#       # Step 7: Terraform Apply only after merge (push to main)
+#       - name: Terraform Apply
+#         if: github.ref == 'refs/heads/main'
+#         run: terraform apply -auto-approve -var-file="terraform.tfvars"
+#         working-directory: aws_handson/terraform
+
+
+
+
+name: Terraform Workflow
+
+on:
+  push:
+    branches:
+      - feature-branch
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRE_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: aws_handson/terraform
+
+      - name: Terraform Plan
+        run: terraform plan -no-color -var-file="terraform.tfvars.example" | tee plan.txt
+        working-directory: aws_handson/terraform
+
+      - name: Post Terraform Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('aws_handson/terraform/plan.txt', 'utf8');
+            const prNumber = context.payload.pull_request.number;
+            const output = `### ✅ Terraform Plan Output\n\`\`\`\n${planOutput}\n\`\`\``;
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      - name: Sleep for 5 minutes
+        run: sleep 300
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve -var-file="terraform.tfvars.example"
+        working-directory: aws_handson/terraform
+
+
